@@ -1,0 +1,257 @@
+{
+  "5": {
+    "inputs": {
+      "image": "7c5503453c2e55bda4501b0a2b697ce01f06c896d7f92dc89ba7022a71ac5f89.png [input]"
+    },
+    "class_type": "LoadImage",
+    "_meta": {
+      "title": "Load Image"
+    }
+  },
+  "71": {
+    "inputs": {
+      "padding": 0,
+      "blur": 0,
+      "mask": [
+        "5",
+        1
+      ],
+      "image_optional": [
+        "5",
+        0
+      ]
+    },
+    "class_type": "MaskBoundingBox+",
+    "_meta": {
+      "title": "🔧 Mask Bounding Box"
+    }
+  },
+  "82": {
+    "inputs": {
+      "image": "4514eecafdc18af8837ea72d1c4de8662a5b5262a0928bce0032c04d142dd1e3.png"
+    },
+    "class_type": "LoadImage",
+    "_meta": {
+      "title": "Load Image"
+    }
+  },
+  "185": {
+    "inputs": {
+      "x": [
+        "71",
+        2
+      ],
+      "y": [
+        "71",
+        3
+      ],
+      "resize_source": false,
+      "destination": [
+        "82",
+        0
+      ],
+      "source": [
+        "71",
+        1
+      ]
+    },
+    "class_type": "ImageCompositeMasked",
+    "_meta": {
+      "title": "ImageCompositeMasked"
+    }
+  },
+  "192": {
+    "inputs": {
+      "x": [
+        "71",
+        2
+      ],
+      "y": [
+        "71",
+        3
+      ],
+      "operation": "and",
+      "destination": [
+        "223",
+        0
+      ],
+      "source": [
+        "220",
+        0
+      ]
+    },
+    "class_type": "MaskComposite",
+    "_meta": {
+      "title": "MaskComposite"
+    }
+  },
+  "209": {
+    "inputs": {
+      "image": [
+        "185",
+        0
+      ],
+      "alpha": [
+        "192",
+        0
+      ]
+    },
+    "class_type": "JoinImageWithAlpha",
+    "_meta": {
+      "title": "Join Image with Alpha"
+    }
+  },
+  "210": {
+    "inputs": {
+      "value": 63
+    },
+    "class_type": "PrimitiveInt",
+    "_meta": {
+      "title": "Int"
+    }
+  },
+  "211": {
+    "inputs": {
+      "value": 59
+    },
+    "class_type": "PrimitiveInt",
+    "_meta": {
+      "title": "Int"
+    }
+  },
+  "212": {
+    "inputs": {
+      "value": 27
+    },
+    "class_type": "PrimitiveInt",
+    "_meta": {
+      "title": "Int"
+    }
+  },
+  "216": {
+    "inputs": {
+      "value": 1
+    },
+    "class_type": "PrimitiveInt",
+    "_meta": {
+      "title": "Int"
+    }
+  },
+  "219": {
+    "inputs": {
+      "model": "RMBG-2.0",
+      "sensitivity": 1,
+      "process_res": 1024,
+      "mask_blur": 0,
+      "mask_offset": 0,
+      "invert_output": false,
+      "refine_foreground": false,
+      "background": "Alpha",
+      "background_color": "#222222",
+      "image": [
+        "71",
+        1
+      ]
+    },
+    "class_type": "RMBG",
+    "_meta": {
+      "title": "Remove Background (RMBG)"
+    }
+  },
+  "220": {
+    "inputs": {
+      "mask": [
+        "219",
+        1
+      ]
+    },
+    "class_type": "InvertMask",
+    "_meta": {
+      "title": "InvertMask"
+    }
+  },
+  "221": {
+    "inputs": {
+      "filename_prefix": "ComfyUI",
+      "images": [
+        "209",
+        0
+      ]
+    },
+    "class_type": "SaveImage",
+    "_meta": {
+      "title": "Save Image"
+    }
+  },
+  "222": {
+    "inputs": {
+      "value": 1,
+      "width": [
+        "211",
+        0
+      ],
+      "height": [
+        "212",
+        0
+      ]
+    },
+    "class_type": "SolidMask",
+    "_meta": {
+      "title": "SolidMask"
+    }
+  },
+  "223": {
+    "inputs": {
+      "x": [
+        "210",
+        0
+      ],
+      "y": [
+        "216",
+        0
+      ],
+      "operation": "or",
+      "destination": [
+        "82",
+        1
+      ],
+      "source": [
+        "222",
+        0
+      ]
+    },
+    "class_type": "MaskComposite",
+    "_meta": {
+      "title": "MaskComposite"
+    }
+  },
+  "224": {
+    "inputs": {
+      "image": [
+        "82",
+        0
+      ],
+      "alpha": [
+        "223",
+        0
+      ]
+    },
+    "class_type": "JoinImageWithAlpha",
+    "_meta": {
+      "title": "Join Image with Alpha"
+    }
+  },
+  "229": {
+    "inputs": {
+      "filename_prefix": "ComfyUI",
+      "images": [
+        "224",
+        0
+      ]
+    },
+    "class_type": "SaveImage",
+    "_meta": {
+      "title": "Save Image"
+    }
+  }
+}

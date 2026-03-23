@@ -1,0 +1,619 @@
+{
+  "76": {
+    "inputs": {
+      "image": "a813593f0bade487a12e1d9c07002377ab778afab0df4b7febfbb823724c49bc.png"
+    },
+    "class_type": "LoadImage",
+    "_meta": {
+      "title": "Load Image"
+    }
+  },
+  "81": {
+    "inputs": {
+      "image": "a8f6c6fb66f47d76d1b7fa11c9e6ca909bb924b15759f7f12d21608f3b938247.png"
+    },
+    "class_type": "LoadImage",
+    "_meta": {
+      "title": "Load Image"
+    }
+  },
+  "94": {
+    "inputs": {
+      "filename_prefix": "Flux2-Klein-4b-base",
+      "images": [
+        "179",
+        0
+      ]
+    },
+    "class_type": "SaveImage",
+    "_meta": {
+      "title": "Save Image"
+    }
+  },
+  "125": {
+    "inputs": {
+      "width": [
+        "177:12",
+        1
+      ],
+      "height": [
+        "177:12",
+        2
+      ],
+      "upscale_method": "nearest-exact",
+      "keep_proportion": "stretch",
+      "pad_color": "0, 0, 0",
+      "crop_position": "center",
+      "divisible_by": 2,
+      "device": "cpu",
+      "image": [
+        "81",
+        0
+      ],
+      "mask": [
+        "81",
+        1
+      ]
+    },
+    "class_type": "ImageResizeKJv2",
+    "_meta": {
+      "title": "Resize Image v2"
+    }
+  },
+  "129": {
+    "inputs": {
+      "width": [
+        "177:11",
+        0
+      ],
+      "height": [
+        "177:11",
+        1
+      ],
+      "upscale_method": "nearest-exact",
+      "keep_proportion": "stretch",
+      "pad_color": "0, 0, 0",
+      "crop_position": "center",
+      "divisible_by": 2,
+      "device": "cpu",
+      "image": [
+        "92:104",
+        0
+      ]
+    },
+    "class_type": "ImageResizeKJv2",
+    "_meta": {
+      "title": "Resize Image v2"
+    }
+  },
+  "141": {
+    "inputs": {
+      "image": [
+        "76",
+        0
+      ],
+      "alpha": [
+        "76",
+        1
+      ]
+    },
+    "class_type": "JoinImageWithAlpha",
+    "_meta": {
+      "title": "Join Image with Alpha"
+    }
+  },
+  "178": {
+    "inputs": {
+      "switch": [
+        "182",
+        0
+      ],
+      "on_false": [
+        "81",
+        0
+      ],
+      "on_true": [
+        "125",
+        0
+      ]
+    },
+    "class_type": "ComfySwitchNode",
+    "_meta": {
+      "title": "Switch"
+    }
+  },
+  "179": {
+    "inputs": {
+      "method": "mkl",
+      "strength": 1,
+      "multithread": true,
+      "image_ref": [
+        "141",
+        0
+      ],
+      "image_target": [
+        "129",
+        0
+      ]
+    },
+    "class_type": "ColorMatch",
+    "_meta": {
+      "title": "Color Match"
+    }
+  },
+  "181": {
+    "inputs": {
+      "switch": [
+        "182",
+        0
+      ],
+      "on_false": [
+        "76",
+        0
+      ],
+      "on_true": [
+        "177:12",
+        0
+      ]
+    },
+    "class_type": "ComfySwitchNode",
+    "_meta": {
+      "title": "Switch"
+    }
+  },
+  "182": {
+    "inputs": {
+      "value": false
+    },
+    "class_type": "PrimitiveBoolean",
+    "_meta": {
+      "title": "Boolean"
+    }
+  },
+  "191": {
+    "inputs": {
+      "image": [
+        "179",
+        0
+      ],
+      "alpha": [
+        "76",
+        1
+      ]
+    },
+    "class_type": "JoinImageWithAlpha",
+    "_meta": {
+      "title": "Join Image with Alpha"
+    }
+  },
+  "240": {
+    "inputs": {
+      "filename_prefix": "ComfyUI",
+      "images": [
+        "191",
+        0
+      ]
+    },
+    "class_type": "SaveImage",
+    "_meta": {
+      "title": "Save Image"
+    }
+  },
+  "177:18": {
+    "inputs": {
+      "a": [
+        "177:11",
+        0
+      ]
+    },
+    "class_type": "CM_IntToFloat",
+    "_meta": {
+      "title": "IntToFloat"
+    }
+  },
+  "177:11": {
+    "inputs": {
+      "image": [
+        "76",
+        0
+      ]
+    },
+    "class_type": "GetImageSize+",
+    "_meta": {
+      "title": "🔧 Get Image Size"
+    }
+  },
+  "177:12": {
+    "inputs": {
+      "width": 1024,
+      "height": [
+        "177:20",
+        0
+      ],
+      "upscale_method": "nearest-exact",
+      "keep_proportion": "stretch",
+      "pad_color": "0, 0, 0",
+      "crop_position": "center",
+      "divisible_by": 2,
+      "device": "cpu",
+      "image": [
+        "76",
+        0
+      ],
+      "mask": [
+        "76",
+        1
+      ]
+    },
+    "class_type": "ImageResizeKJv2",
+    "_meta": {
+      "title": "Resize Image v2"
+    }
+  },
+  "177:15": {
+    "inputs": {
+      "op": "Div",
+      "a": 1024,
+      "b": [
+        "177:18",
+        0
+      ]
+    },
+    "class_type": "CM_FloatBinaryOperation",
+    "_meta": {
+      "title": "FloatBinaryOperation"
+    }
+  },
+  "177:19": {
+    "inputs": {
+      "op": "Mul",
+      "a": [
+        "177:15",
+        0
+      ],
+      "b": [
+        "177:21",
+        0
+      ]
+    },
+    "class_type": "CM_FloatBinaryOperation",
+    "_meta": {
+      "title": "FloatBinaryOperation"
+    }
+  },
+  "177:20": {
+    "inputs": {
+      "a": [
+        "177:19",
+        0
+      ]
+    },
+    "class_type": "CM_FloatToInt",
+    "_meta": {
+      "title": "FloatToInt"
+    }
+  },
+  "177:21": {
+    "inputs": {
+      "a": [
+        "177:11",
+        1
+      ]
+    },
+    "class_type": "CM_IntToFloat",
+    "_meta": {
+      "title": "IntToFloat"
+    }
+  },
+  "92:102": {
+    "inputs": {
+      "sampler_name": "dpmpp_sde"
+    },
+    "class_type": "KSamplerSelect",
+    "_meta": {
+      "title": "KSamplerSelect"
+    }
+  },
+  "92:103": {
+    "inputs": {
+      "noise": [
+        "92:105",
+        0
+      ],
+      "guider": [
+        "92:114",
+        0
+      ],
+      "sampler": [
+        "92:102",
+        0
+      ],
+      "sigmas": [
+        "92:115",
+        0
+      ],
+      "latent_image": [
+        "92:109",
+        0
+      ]
+    },
+    "class_type": "SamplerCustomAdvanced",
+    "_meta": {
+      "title": "SamplerCustomAdvanced"
+    }
+  },
+  "92:104": {
+    "inputs": {
+      "samples": [
+        "92:103",
+        0
+      ],
+      "vae": [
+        "92:107",
+        0
+      ]
+    },
+    "class_type": "VAEDecode",
+    "_meta": {
+      "title": "VAE Decode"
+    }
+  },
+  "92:105": {
+    "inputs": {
+      "noise_seed": 726523370693374
+    },
+    "class_type": "RandomNoise",
+    "_meta": {
+      "title": "RandomNoise"
+    }
+  },
+  "92:106": {
+    "inputs": {
+      "unet_name": "flux-2-klein-9b.safetensors",
+      "weight_dtype": "default"
+    },
+    "class_type": "UNETLoader",
+    "_meta": {
+      "title": "Load Diffusion Model"
+    }
+  },
+  "92:107": {
+    "inputs": {
+      "vae_name": "flux2-vae.safetensors"
+    },
+    "class_type": "VAELoader",
+    "_meta": {
+      "title": "Load VAE"
+    }
+  },
+  "92:108": {
+    "inputs": {
+      "image": [
+        "92:110",
+        0
+      ]
+    },
+    "class_type": "GetImageSize",
+    "_meta": {
+      "title": "Get Image Size"
+    }
+  },
+  "92:109": {
+    "inputs": {
+      "width": [
+        "92:108",
+        0
+      ],
+      "height": [
+        "92:108",
+        1
+      ],
+      "batch_size": 1
+    },
+    "class_type": "EmptyFlux2LatentImage",
+    "_meta": {
+      "title": "Empty Flux 2 Latent"
+    }
+  },
+  "92:110": {
+    "inputs": {
+      "upscale_method": "nearest-exact",
+      "megapixels": 1,
+      "resolution_steps": 1,
+      "image": [
+        "181",
+        0
+      ]
+    },
+    "class_type": "ImageScaleToTotalPixels",
+    "_meta": {
+      "title": "ImageScaleToTotalPixels"
+    }
+  },
+  "92:85": {
+    "inputs": {
+      "upscale_method": "nearest-exact",
+      "megapixels": 1,
+      "resolution_steps": 1,
+      "image": [
+        "178",
+        0
+      ]
+    },
+    "class_type": "ImageScaleToTotalPixels",
+    "_meta": {
+      "title": "ImageScaleToTotalPixels"
+    }
+  },
+  "92:84:119": {
+    "inputs": {
+      "conditioning": [
+        "92:112:116",
+        0
+      ],
+      "latent": [
+        "92:84:120",
+        0
+      ]
+    },
+    "class_type": "ReferenceLatent",
+    "_meta": {
+      "title": "ReferenceLatent"
+    }
+  },
+  "92:84:120": {
+    "inputs": {
+      "pixels": [
+        "92:85",
+        0
+      ],
+      "vae": [
+        "92:107",
+        0
+      ]
+    },
+    "class_type": "VAEEncode",
+    "_meta": {
+      "title": "VAE Encode"
+    }
+  },
+  "92:84:121": {
+    "inputs": {
+      "conditioning": [
+        "92:112:118",
+        0
+      ],
+      "latent": [
+        "92:84:120",
+        0
+      ]
+    },
+    "class_type": "ReferenceLatent",
+    "_meta": {
+      "title": "ReferenceLatent"
+    }
+  },
+  "92:111": {
+    "inputs": {
+      "clip_name": "qwen_3_8b_fp8mixed.safetensors",
+      "type": "flux2",
+      "device": "default"
+    },
+    "class_type": "CLIPLoader",
+    "_meta": {
+      "title": "Load CLIP"
+    }
+  },
+  "92:112:116": {
+    "inputs": {
+      "conditioning": [
+        "92:87",
+        0
+      ],
+      "latent": [
+        "92:112:117",
+        0
+      ]
+    },
+    "class_type": "ReferenceLatent",
+    "_meta": {
+      "title": "ReferenceLatent"
+    }
+  },
+  "92:112:117": {
+    "inputs": {
+      "pixels": [
+        "92:110",
+        0
+      ],
+      "vae": [
+        "92:107",
+        0
+      ]
+    },
+    "class_type": "VAEEncode",
+    "_meta": {
+      "title": "VAE Encode"
+    }
+  },
+  "92:112:118": {
+    "inputs": {
+      "conditioning": [
+        "92:113",
+        0
+      ],
+      "latent": [
+        "92:112:117",
+        0
+      ]
+    },
+    "class_type": "ReferenceLatent",
+    "_meta": {
+      "title": "ReferenceLatent"
+    }
+  },
+  "92:113": {
+    "inputs": {
+      "text": "Use Figure 1 as the base image and layout reference.\n\nReplace ONLY the text content with the text from Figure 2.\n\nStrict requirements:\n- Keep the exact same layout and composition as Figure 1.\n- Preserve the original font family, font size, font weight, and text color.\n- Keep the exact same text positions, spacing, and alignment.\n- Do NOT move, resize, redesign, or restyle any elements.\n- Do NOT change the background, shapes, icons, or graphics.\n- The final image must look identical to Figure 1 except that the text is replaced with the text from Figure 2.\n\nThis is a text replacement task, not a redesign.",
+      "clip": [
+        "92:111",
+        0
+      ]
+    },
+    "class_type": "CLIPTextEncode",
+    "_meta": {
+      "title": "CLIP Text Encode (Positive Prompt)"
+    }
+  },
+  "92:87": {
+    "inputs": {
+      "text": "",
+      "clip": [
+        "92:111",
+        0
+      ]
+    },
+    "class_type": "CLIPTextEncode",
+    "_meta": {
+      "title": "CLIP Text Encode ( Negative Prompt)"
+    }
+  },
+  "92:114": {
+    "inputs": {
+      "cfg": 3,
+      "model": [
+        "92:106",
+        0
+      ],
+      "positive": [
+        "92:84:121",
+        0
+      ],
+      "negative": [
+        "92:84:119",
+        0
+      ]
+    },
+    "class_type": "CFGGuider",
+    "_meta": {
+      "title": "CFGGuider"
+    }
+  },
+  "92:115": {
+    "inputs": {
+      "steps": 20,
+      "width": [
+        "92:108",
+        0
+      ],
+      "height": [
+        "92:108",
+        1
+      ]
+    },
+    "class_type": "Flux2Scheduler",
+    "_meta": {
+      "title": "Flux2Scheduler"
+    }
+  }
+}
