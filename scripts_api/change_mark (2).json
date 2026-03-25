@@ -20,11 +20,11 @@
   "209": {
     "inputs": {
       "image": [
-        "265:185",
+        "278",
         0
       ],
       "alpha": [
-        "265:192",
+        "277",
         0
       ]
     },
@@ -53,7 +53,7 @@
         0
       ],
       "alpha": [
-        "265:223",
+        "273",
         0
       ]
     },
@@ -165,36 +165,7 @@
       "title": "Bbox To Int"
     }
   },
-  "263": {
-    "inputs": {
-      "image": [
-        "265:185",
-        0
-      ],
-      "alpha": [
-        "82",
-        1
-      ]
-    },
-    "class_type": "JoinImageWithAlpha",
-    "_meta": {
-      "title": "Join Image with Alpha"
-    }
-  },
-  "264": {
-    "inputs": {
-      "filename_prefix": "ComfyUI",
-      "images": [
-        "263",
-        0
-      ]
-    },
-    "class_type": "SaveImage",
-    "_meta": {
-      "title": "Save Image"
-    }
-  },
-  "265:222": {
+  "272": {
     "inputs": {
       "value": 1,
       "width": [
@@ -211,7 +182,7 @@
       "title": "SolidMask"
     }
   },
-  "265:223": {
+  "273": {
     "inputs": {
       "x": [
         "257",
@@ -227,7 +198,7 @@
         1
       ],
       "source": [
-        "265:222",
+        "272",
         0
       ]
     },
@@ -236,7 +207,7 @@
       "title": "MaskComposite"
     }
   },
-  "265:254": {
+  "274": {
     "inputs": {
       "x": [
         "247",
@@ -265,7 +236,7 @@
       "title": "Image Crop Location Exact"
     }
   },
-  "265:219": {
+  "275": {
     "inputs": {
       "model": "RMBG-2.0",
       "sensitivity": 1,
@@ -277,7 +248,7 @@
       "background": "Alpha",
       "background_color": "#222222",
       "image": [
-        "265:254",
+        "274",
         0
       ]
     },
@@ -286,10 +257,10 @@
       "title": "Remove Background (RMBG)"
     }
   },
-  "265:220": {
+  "276": {
     "inputs": {
       "mask": [
-        "265:219",
+        "275",
         1
       ]
     },
@@ -298,7 +269,7 @@
       "title": "InvertMask"
     }
   },
-  "265:192": {
+  "277": {
     "inputs": {
       "x": [
         "247",
@@ -310,11 +281,11 @@
       ],
       "operation": "and",
       "destination": [
-        "265:223",
+        "273",
         0
       ],
       "source": [
-        "265:220",
+        "276",
         0
       ]
     },
@@ -323,7 +294,7 @@
       "title": "MaskComposite"
     }
   },
-  "265:185": {
+  "278": {
     "inputs": {
       "x": [
         "247",
@@ -339,7 +310,7 @@
         0
       ],
       "source": [
-        "265:254",
+        "274",
         0
       ]
     },

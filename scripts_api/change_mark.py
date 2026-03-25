@@ -4,6 +4,7 @@ import sys
 from typing import Sequence, Mapping, Any, Union
 import torch
 
+
 def get_value_at_index(obj: Union[Sequence, Mapping], index: int) -> Any:
     """Returns the value at the given index of a sequence or mapping.
 
@@ -84,7 +85,6 @@ def add_extra_model_paths() -> None:
         print("Could not find the extra_model_paths config file.")
 
 
-
 add_comfyui_directory_to_sys_path()
 add_extra_model_paths()
 
@@ -98,6 +98,7 @@ def import_custom_nodes() -> None:
     import asyncio
     import execution
     from nodes import init_extra_nodes
+
     sys.path.insert(0, find_path("ComfyUI"))
     import server
 
@@ -106,33 +107,51 @@ def import_custom_nodes() -> None:
     asyncio.set_event_loop(loop)
 
     # Creating an instance of PromptServer with the loop
-    # server_instance = server.PromptServer(loop)
-    # execution.PromptQueue(server_instance)
+    server_instance = server.PromptServer(loop)
+    execution.PromptQueue(server_instance)
 
     # Initializing custom nodes
     asyncio.run(init_extra_nodes())
 
-from nodes import LoadImage, SaveImage,NODE_CLASS_MAPPINGS
 
+from nodes import NODE_CLASS_MAPPINGS
 
-def main():
-    import_custom_nodes()
+import_custom_nodes()
+
+def main(image_original="icon_nd@.png", image_generated="ComfyUI_temp_ttkbc_00001_.png"):
+   
     with torch.inference_mode():
-        loadimage = LoadImage()
-        loadimage_5 = loadimage.load_image(image="7c5503453c2e55bda4501b0a2b697ce01f06c896d7f92dc89ba7022a71ac5f89.png [input]")
+        loadimage = NODE_CLASS_MAPPINGS["LoadImage"]()
+        
+        loadimage_82 = loadimage.load_image(image=image_original)
+        loadimage_5 = loadimage.load_image(image=image_generated)
+        
+        paddleocrnode = NODE_CLASS_MAPPINGS["PaddleOCRNode"]()
 
-        loadimage_82 = loadimage.load_image(image="4514eecafdc18af8837ea72d1c4de8662a5b5262a0928bce0032c04d142dd1e3.png")
+        paddleocrnode_230 = paddleocrnode.run(
+            lang="ch", device="gpu", image=get_value_at_index(loadimage_82, 0)
+        )
 
-        primitiveint = NODE_CLASS_MAPPINGS["PrimitiveInt"]()
-        primitiveint_171_160 = primitiveint.EXECUTE_NORMALIZED(value=63)
+        paddleocrnode_243 = paddleocrnode.run(
+                lang="ch", device="gpu", image=get_value_at_index(loadimage_5, 0)
+            )
+        filterchinesetext = NODE_CLASS_MAPPINGS["FilterChineseText"]()
+        
+        filterchinesetext_244 = filterchinesetext.encode(
+            texts_bboxes=get_value_at_index(paddleocrnode_230, 2),
+            texts_string=get_value_at_index(paddleocrnode_230, 1),
+        )
 
-        primitiveint_171_161 = primitiveint.EXECUTE_NORMALIZED(value=59)
-
-        primitiveint_171_162 = primitiveint.EXECUTE_NORMALIZED(value=27)
-
-        primitiveint_171_167 = primitiveint.EXECUTE_NORMALIZED(value=1)
-
-        maskboundingbox = NODE_CLASS_MAPPINGS["MaskBoundingBox+"]()
+        detectbboxnode = NODE_CLASS_MAPPINGS["DetectBBoxNode"]()
+        
+        detectbboxnode_245 = detectbboxnode.run(
+                bboxes_target=get_value_at_index(filterchinesetext_244, 0),
+                bboxes=get_value_at_index(paddleocrnode_243, 2),
+                texts_string=get_value_at_index(paddleocrnode_243, 1),
+            )
+        
+        bboxtoint = NODE_CLASS_MAPPINGS["BboxToInt"]()
+        image_crop_location_exact = NODE_CLASS_MAPPINGS["Image Crop Location Exact"]()
         imagecompositemasked = NODE_CLASS_MAPPINGS["ImageCompositeMasked"]()
         solidmask = NODE_CLASS_MAPPINGS["SolidMask"]()
         maskcomposite = NODE_CLASS_MAPPINGS["MaskComposite"]()
@@ -142,28 +161,103 @@ def main():
         saveimage = NODE_CLASS_MAPPINGS["SaveImage"]()
 
         for q in range(1):
-            maskboundingbox_71 = maskboundingbox.execute(padding=0, blur=0, mask=get_value_at_index(loadimage_5, 1), image_optional=get_value_at_index(loadimage_5, 0))
+            mark_target = get_value_at_index(loadimage_82, 1)
+            for i in range(len(get_value_at_index(filterchinesetext_244, 0))):
 
-            imagecompositemasked_185 = imagecompositemasked.EXECUTE_NORMALIZED(x=get_value_at_index(maskboundingbox_71, 2), y=get_value_at_index(maskboundingbox_71, 3), resize_source=False, destination=get_value_at_index(loadimage_82, 0), source=get_value_at_index(maskboundingbox_71, 1))
+                bboxtoint_247 = bboxtoint.bboxtoint(
+                    index=i, bboxes=get_value_at_index(detectbboxnode_245, 0)
+                )
 
-            solidmask_171_165 = solidmask.EXECUTE_NORMALIZED(value=1, width=get_value_at_index(primitiveint_171_161, 0), height=get_value_at_index(primitiveint_171_162, 0))
+                image_crop_location_exact_265_254 = image_crop_location_exact.main(
+                    x=get_value_at_index(bboxtoint_247, 0),
+                    y=get_value_at_index(bboxtoint_247, 1),
+                    width=get_value_at_index(bboxtoint_247, 2),
+                    height=get_value_at_index(bboxtoint_247, 3),
+                    edge="original",
+                    image=get_value_at_index(loadimage_5, 0),
+                )
 
-            maskcomposite_171_166 = maskcomposite.EXECUTE_NORMALIZED(x=get_value_at_index(primitiveint_171_160, 0), y=get_value_at_index(primitiveint_171_167, 0), operation="or", destination=get_value_at_index(loadimage_82, 1), source=get_value_at_index(solidmask_171_165, 0))
+                imagecompositemasked_265_185 = imagecompositemasked.EXECUTE_NORMALIZED(
+                    x=get_value_at_index(bboxtoint_247, 0),
+                    y=get_value_at_index(bboxtoint_247, 1),
+                    resize_source=False,
+                    destination=get_value_at_index(loadimage_82, 0),
+                    source=get_value_at_index(image_crop_location_exact_265_254, 0),
+                )
 
-            rmbg_80_56 = rmbg.process_image(model="RMBG-2.0", sensitivity=1, process_res=1024, mask_blur=0, mask_offset=0, invert_output=False, refine_foreground=False, background="Alpha", background_color="#222222", image=get_value_at_index(maskboundingbox_71, 1))
+                bboxtoint_257 = bboxtoint.bboxtoint(
+                    index=i, bboxes=get_value_at_index(filterchinesetext_244, 0)
+                )
 
-            invertmask_80_76 = invertmask.EXECUTE_NORMALIZED(mask=get_value_at_index(rmbg_80_56, 1))
+                solidmask_265_222 = solidmask.EXECUTE_NORMALIZED(
+                    value=1,
+                    width=get_value_at_index(bboxtoint_257, 2),
+                    height=get_value_at_index(bboxtoint_257, 3),
+                )
 
-            maskcomposite_192 = maskcomposite.EXECUTE_NORMALIZED(x=get_value_at_index(maskboundingbox_71, 2), y=get_value_at_index(maskboundingbox_71, 3), operation="and", destination=get_value_at_index(maskcomposite_171_166, 0), source=get_value_at_index(invertmask_80_76, 0))
+                maskcomposite_265_223 = maskcomposite.EXECUTE_NORMALIZED(
+                    x=get_value_at_index(bboxtoint_257, 0),
+                    y=get_value_at_index(bboxtoint_257, 1),
+                    operation="or",
+                    destination=mark_target,
+                    source=get_value_at_index(solidmask_265_222, 0),
+                )
 
-            joinimagewithalpha_209 = joinimagewithalpha.EXECUTE_NORMALIZED(image=get_value_at_index(imagecompositemasked_185, 0), alpha=get_value_at_index(maskcomposite_192, 0))
+                rmbg_265_219 = rmbg.process_image(
+                    model="RMBG-2.0",
+                    sensitivity=1,
+                    process_res=1024,
+                    mask_blur=0,
+                    mask_offset=0,
+                    invert_output=False,
+                    refine_foreground=False,
+                    background="Alpha",
+                    background_color="#222222",
+                    image=get_value_at_index(image_crop_location_exact_265_254, 0),
+                )
 
-            joinimagewithalpha_171_181 = joinimagewithalpha.EXECUTE_NORMALIZED(image=get_value_at_index(loadimage_82, 0), alpha=get_value_at_index(maskcomposite_171_166, 0))
+                invertmask_265_220 = invertmask.EXECUTE_NORMALIZED(
+                    mask=get_value_at_index(rmbg_265_219, 1)
+                )
 
-            saveimage_209 = saveimage.save_images(image=get_value_at_index(joinimagewithalpha_209, 0), path="output_masked.png")
-            
-            saveimage_171_182 = saveimage.save_images(image=get_value_at_index(joinimagewithalpha_171_181, 0), path="output.png")
+                mark_target = maskcomposite.EXECUTE_NORMALIZED(
+                    x=get_value_at_index(bboxtoint_247, 0),
+                    y=get_value_at_index(bboxtoint_247, 1),
+                    operation="and",
+                    destination=get_value_at_index(maskcomposite_265_223, 0),
+                    source=get_value_at_index(invertmask_265_220, 0),
+                )
+
+            joinimagewithalpha_209 = joinimagewithalpha.EXECUTE_NORMALIZED(
+                image=get_value_at_index(imagecompositemasked_265_185, 0),
+                alpha=get_value_at_index(mark_target, 0),
+            )
+
+            saveimage_221 = saveimage.save_images(
+                filename_prefix="ComfyUI",
+                images=get_value_at_index(joinimagewithalpha_209, 0),
+            )
+
+            joinimagewithalpha_224 = joinimagewithalpha.EXECUTE_NORMALIZED(
+                image=get_value_at_index(loadimage_82, 0),
+                alpha=get_value_at_index(maskcomposite_265_223, 0),
+            )
+
+            saveimage_229 = saveimage.save_images(
+                filename_prefix="ComfyUI",
+                images=get_value_at_index(joinimagewithalpha_224, 0),
+            )
+
+            # joinimagewithalpha_263 = joinimagewithalpha.EXECUTE_NORMALIZED(
+            #     image=get_value_at_index(imagecompositemasked_265_185, 0),
+            #     alpha=get_value_at_index(loadimage_82, 1),
+            # )
+
+            # saveimage_264 = saveimage.save_images(
+            #     filename_prefix="ComfyUI",
+            #     images=get_value_at_index(joinimagewithalpha_263, 0),
+            # )
 
 
 if __name__ == "__main__":
-	main()
+    main()
