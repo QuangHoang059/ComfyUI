@@ -113,30 +113,34 @@ def import_custom_nodes() -> None:
     asyncio.run(init_extra_nodes())
 
 
-from nodes import CLIPLoader, LoadImage, VAEEncode, VAEDecode, UNETLoader, SaveImage, VAELoader, CLIPTextEncode, NODE_CLASS_MAPPINGS
+from nodes import NODE_CLASS_MAPPINGS
 
 def main():
 	import_custom_nodes()
 	with torch.inference_mode():
-		loadimage = LoadImage()
-		loadimage_76 = loadimage.load_image(image="a813593f0bade487a12e1d9c07002377ab778afab0df4b7febfbb823724c49bc.png")
-
-		loadimage_81 = loadimage.load_image(image="a8f6c6fb66f47d76d1b7fa11c9e6ca909bb924b15759f7f12d21608f3b938247.png")
+		loadimage = NODE_CLASS_MAPPINGS["LoadImage"]()
+		loadimage_76 = loadimage.load_image(image="tag_hot.png")
 
 		primitiveboolean = NODE_CLASS_MAPPINGS["PrimitiveBoolean"]()
 		primitiveboolean_182 = primitiveboolean.EXECUTE_NORMALIZED(value=False)
 
-		ksamplerselect = NODE_CLASS_MAPPINGS["KSamplerSelect"]()
-		ksamplerselect_92_102 = ksamplerselect.EXECUTE_NORMALIZED(sampler_name="dpmpp_sde")
+		paddleocrnode = NODE_CLASS_MAPPINGS["PaddleOCRNode"]()
+		paddleocrnode_241 = paddleocrnode.run(lang="ch", device="gpu", image=get_value_at_index(loadimage_76, 0))
 
-		randomnoise = NODE_CLASS_MAPPINGS["RandomNoise"]()
-		randomnoise_92_105 = randomnoise.EXECUTE_NORMALIZED(noise_seed=random.randint(1, 2**64))
+		filterchinesetext = NODE_CLASS_MAPPINGS["FilterChineseText"]()
+		filterchinesetext_242 = filterchinesetext.encode(texts_bboxes=get_value_at_index(paddleocrnode_241, 0), texts_string=get_value_at_index(paddleocrnode_241, 1))
 
-		unetloader = UNETLoader()
-		unetloader_92_106 = unetloader.load_unet(unet_name="flux-2-klein-9b.safetensors", weight_dtype="default")
+		autotranslatechinatovn = NODE_CLASS_MAPPINGS["AutoTranslateChinaToVN"]()
+		autotranslatechinatovn_244 = autotranslatechinatovn.encode(texts_bboxes=get_value_at_index(filterchinesetext_242, 0), texts_string=get_value_at_index(filterchinesetext_242, 1))
 
-		vaeloader = VAELoader()
-		vaeloader_92_107 = vaeloader.load_vae(vae_name="flux2-vae.safetensors")
+		unetloader = NODE_CLASS_MAPPINGS["UNETLoader"]()
+		unetloader_92_106 = unetloader.load_unet(unet_name="flux-2-klein-9b-fp8.safetensors", weight_dtype="default")
+
+		sdvn_run_python_code = NODE_CLASS_MAPPINGS["SDVN Run Python Code"]()
+		sdvn_run_python_code_253 = sdvn_run_python_code.python_function(function="def function(input_value, extra_value=None):\n    import json\n\n    result=json.loads(f''{input_value}'')\n    return [[result]]", input=get_value_at_index(autotranslatechinatovn_244, 1))
+
+		createimagebytextnode = NODE_CLASS_MAPPINGS["CreateImageByTextNode"]()
+		createimagebytextnode_243 = createimagebytextnode.run(image=get_value_at_index(loadimage_76, 0), bboxes=get_value_at_index(autotranslatechinatovn_244, 0), texts_string=get_value_at_index(sdvn_run_python_code_253, 0))
 
 		getimagesize = NODE_CLASS_MAPPINGS["GetImageSize+"]()
 		getimagesize_177_11 = getimagesize.execute(image=get_value_at_index(loadimage_76, 0))
@@ -155,21 +159,44 @@ def main():
 		cm_floattoint_177_20 = cm_floattoint.op(a=get_value_at_index(cm_floatbinaryoperation_177_19, 0))
 
 		imageresizekjv2 = NODE_CLASS_MAPPINGS["ImageResizeKJv2"]()
-		imageresizekjv2_177_12 = imageresizekjv2.resize(width=1024, height=get_value_at_index(cm_floattoint_177_20, 0), upscale_method="nearest-exact", keep_proportion="stretch", pad_color="0, 0, 0", crop_position="center", divisible_by=2, device="cpu", image=get_value_at_index(loadimage_76, 0), mask=get_value_at_index(loadimage_76, 1), unique_id=7725405066885820406)
+		imageresizekjv2_177_12 = imageresizekjv2.resize(width=1024, height=get_value_at_index(cm_floattoint_177_20, 0), upscale_method="nearest-exact", keep_proportion="stretch", pad_color="0, 0, 0", crop_position="center", divisible_by=2, device="cpu", image=get_value_at_index(loadimage_76, 0), mask=get_value_at_index(loadimage_76, 1), unique_id=12403509139445845994)
 
-		imageresizekjv2_125 = imageresizekjv2.resize(width=get_value_at_index(imageresizekjv2_177_12, 1), height=get_value_at_index(imageresizekjv2_177_12, 2), upscale_method="nearest-exact", keep_proportion="stretch", pad_color="0, 0, 0", crop_position="center", divisible_by=2, device="cpu", image=get_value_at_index(loadimage_81, 0), mask=get_value_at_index(loadimage_81, 1), unique_id=10513687745196646337)
+		imageresizekjv2_125 = imageresizekjv2.resize(width=get_value_at_index(imageresizekjv2_177_12, 1), height=get_value_at_index(imageresizekjv2_177_12, 2), upscale_method="nearest-exact", keep_proportion="stretch", pad_color="0, 0, 0", crop_position="center", divisible_by=2, device="cpu", image=get_value_at_index(createimagebytextnode_243, 0), unique_id=3597060319182616064)
 
 		comfyswitchnode = NODE_CLASS_MAPPINGS["ComfySwitchNode"]()
-		comfyswitchnode_178 = comfyswitchnode.EXECUTE_NORMALIZED(switch=get_value_at_index(primitiveboolean_182, 0), on_false=get_value_at_index(loadimage_81, 0), on_true=get_value_at_index(imageresizekjv2_125, 0))
-      
+		comfyswitchnode_178 = comfyswitchnode.EXECUTE_NORMALIZED(switch=get_value_at_index(primitiveboolean_182, 0), on_false=get_value_at_index(createimagebytextnode_243, 0), on_true=get_value_at_index(imageresizekjv2_125, 0))
+
 		imagescaletototalpixels = NODE_CLASS_MAPPINGS["ImageScaleToTotalPixels"]()
 		imagescaletototalpixels_92_85 = imagescaletototalpixels.EXECUTE_NORMALIZED(upscale_method="nearest-exact", megapixels=1, resolution_steps=1, image=get_value_at_index(comfyswitchnode_178, 0))
 
-		vaeencode = VAEEncode()
+		vaeloader = NODE_CLASS_MAPPINGS["VAELoader"]()
+		vaeloader_92_107 = vaeloader.load_vae(vae_name="flux2-vae.safetensors")
+
+		vaeencode = NODE_CLASS_MAPPINGS["VAEEncode"]()
 		vaeencode_92_84_120 = vaeencode.encode(pixels=get_value_at_index(imagescaletototalpixels_92_85, 0), vae=get_value_at_index(vaeloader_92_107, 0))
 
-		cliploader = CLIPLoader()
+		cliploader = NODE_CLASS_MAPPINGS["CLIPLoader"]()
 		cliploader_92_111 = cliploader.load_clip(clip_name="qwen_3_8b_fp8mixed.safetensors", type="flux2", device="default")
+
+		cliptextencode = NODE_CLASS_MAPPINGS["CLIPTextEncode"]()
+		cliptextencode_92_113 = cliptextencode.encode(
+            text="""Use Figure 1 as the base image and layout reference.
+
+            Replace ONLY the text content with the text from Figure 2.
+
+            Strict requirements:
+            - Keep the exact same layout and composition as Figure 1.
+            - Preserve the original font family, font size, font weight, and text color.
+            - Keep the exact same text positions, spacing, and alignment.
+            - Do NOT move, resize, redesign, or restyle any elements.
+            - Do NOT change the background, shapes, icons, or graphics.
+            - The final image must look identical to Figure 1 except that the text is replaced with the text from Figure 2.
+
+            This is a text replacement task, not a redesign.""",
+            clip=get_value_at_index(cliploader_92_111, 0)
+        )
+
+		cliptextencode_92_87 = cliptextencode.encode(text="", clip=get_value_at_index(cliploader_92_111, 0))
 
 		comfyswitchnode_181 = comfyswitchnode.EXECUTE_NORMALIZED(switch=get_value_at_index(primitiveboolean_182, 0), on_false=get_value_at_index(loadimage_76, 0), on_true=get_value_at_index(imageresizekjv2_177_12, 0))
 
@@ -177,22 +204,11 @@ def main():
 
 		vaeencode_92_112_117 = vaeencode.encode(pixels=get_value_at_index(imagescaletototalpixels_92_110, 0), vae=get_value_at_index(vaeloader_92_107, 0))
 
-		cliptextencode = CLIPTextEncode()
-		cliptextencode_92_113 = cliptextencode.encode(text="""Use Figure 1 as the base image and layout reference.
+		randomnoise = NODE_CLASS_MAPPINGS["RandomNoise"]()
+		randomnoise_92_105 = randomnoise.EXECUTE_NORMALIZED(noise_seed=random.randint(1, 2**64))
 
-Replace ONLY the text content with the text from Figure 2.
-
-Strict requirements:
-- Keep the exact same layout and composition as Figure 1.
-- Preserve the original font family, font size, font weight, and text color.
-- Keep the exact same text positions, spacing, and alignment.
-- Do NOT move, resize, redesign, or restyle any elements.
-- Do NOT change the background, shapes, icons, or graphics.
-- The final image must look identical to Figure 1 except that the text is replaced with the text from Figure 2.
-
-This is a text replacement task, not a redesign.""", clip=get_value_at_index(cliploader_92_111, 0))
-
-		cliptextencode_92_87 = cliptextencode.encode(text="", clip=get_value_at_index(cliploader_92_111, 0))
+		ksamplerselect = NODE_CLASS_MAPPINGS["KSamplerSelect"]()
+		ksamplerselect_92_102 = ksamplerselect.EXECUTE_NORMALIZED(sampler_name="euler")
 
 		joinimagewithalpha = NODE_CLASS_MAPPINGS["JoinImageWithAlpha"]()
 		referencelatent = NODE_CLASS_MAPPINGS["ReferenceLatent"]()
@@ -201,9 +217,9 @@ This is a text replacement task, not a redesign.""", clip=get_value_at_index(cli
 		flux2scheduler = NODE_CLASS_MAPPINGS["Flux2Scheduler"]()
 		emptyflux2latentimage = NODE_CLASS_MAPPINGS["EmptyFlux2LatentImage"]()
 		samplercustomadvanced = NODE_CLASS_MAPPINGS["SamplerCustomAdvanced"]()
-		vaedecode = VAEDecode()
+		vaedecode = NODE_CLASS_MAPPINGS["VAEDecode"]()
 		colormatch = NODE_CLASS_MAPPINGS["ColorMatch"]()
-		saveimage = SaveImage()
+		saveimage = NODE_CLASS_MAPPINGS["SaveImage"]()
 
 		for q in range(1):
 			joinimagewithalpha_141 = joinimagewithalpha.EXECUTE_NORMALIZED(image=get_value_at_index(loadimage_76, 0), alpha=get_value_at_index(loadimage_76, 1))
@@ -216,9 +232,9 @@ This is a text replacement task, not a redesign.""", clip=get_value_at_index(cli
 
 			referencelatent_92_84_119 = referencelatent.EXECUTE_NORMALIZED(conditioning=get_value_at_index(referencelatent_92_112_116, 0), latent=get_value_at_index(vaeencode_92_84_120, 0))
 
-			cfgguider_92_114 = cfgguider.EXECUTE_NORMALIZED(cfg=3, model=get_value_at_index(unetloader_92_106, 0), positive=get_value_at_index(referencelatent_92_84_121, 0), negative=get_value_at_index(referencelatent_92_84_119, 0))
+			cfgguider_92_114 = cfgguider.EXECUTE_NORMALIZED(cfg=5, model=get_value_at_index(unetloader_92_106, 0), positive=get_value_at_index(referencelatent_92_84_121, 0), negative=get_value_at_index(referencelatent_92_84_119, 0))
 
-			getimagesize_92_108 = getimagesize.EXECUTE_NORMALIZED(image=get_value_at_index(imagescaletototalpixels_92_110, 0), unique_id=17768898528616199)
+			getimagesize_92_108 = getimagesize.EXECUTE_NORMALIZED(image=get_value_at_index(imagescaletototalpixels_92_110, 0), unique_id=4325781458001510556)
 
 			flux2scheduler_92_115 = flux2scheduler.EXECUTE_NORMALIZED(steps=20, width=get_value_at_index(getimagesize_92_108, 0), height=get_value_at_index(getimagesize_92_108, 1))
 
@@ -228,9 +244,9 @@ This is a text replacement task, not a redesign.""", clip=get_value_at_index(cli
 
 			vaedecode_92_104 = vaedecode.decode(samples=get_value_at_index(samplercustomadvanced_92_103, 0), vae=get_value_at_index(vaeloader_92_107, 0))
 
-			imageresizekjv2_129 = imageresizekjv2.resize(width=get_value_at_index(getimagesize_177_11, 0), height=get_value_at_index(getimagesize_177_11, 1), upscale_method="nearest-exact", keep_proportion="stretch", pad_color="0, 0, 0", crop_position="center", divisible_by=2, device="cpu", image=get_value_at_index(vaedecode_92_104, 0), unique_id=7421654085759230160)
+			imageresizekjv2_129 = imageresizekjv2.resize(width=get_value_at_index(getimagesize_177_11, 0), height=get_value_at_index(getimagesize_177_11, 1), upscale_method="nearest-exact", keep_proportion="stretch", pad_color="0, 0, 0", crop_position="center", divisible_by=2, device="cpu", image=get_value_at_index(vaedecode_92_104, 0), unique_id=1642360321667796631)
 
-			colormatch_179 = colormatch.colormatch(method="mkl", strength=1, multithread=True, image_ref=get_value_at_index(joinimagewithalpha_141, 0), image_target=get_value_at_index(imageresizekjv2_129, 0))
+			colormatch_179 = colormatch.match_color(method="mkl", image_ref=get_value_at_index(joinimagewithalpha_141, 0), image_target=get_value_at_index(imageresizekjv2_129, 0))
 
 			saveimage_94 = saveimage.save_images(filename_prefix="Flux2-Klein-4b-base", images=get_value_at_index(colormatch_179, 0))
 
