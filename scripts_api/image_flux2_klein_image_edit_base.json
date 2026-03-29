@@ -389,9 +389,9 @@
         0
       ]
     },
-    "class_type": "GetImageSize",
+    "class_type": "GetImageSize+",
     "_meta": {
-      "title": "Get Image Size"
+      "title": "🔧 Get Image Size"
     }
   },
   "92:109": {
@@ -660,7 +660,7 @@
   },
   "92:102": {
     "inputs": {
-      "sampler_name": "euler"
+      "sampler_name": "dpmpp_2m_sde"
     },
     "class_type": "KSamplerSelect",
     "_meta": {

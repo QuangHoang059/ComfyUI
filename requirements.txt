@@ -35,3 +35,6 @@ pydantic~=2.0
 pydantic-settings~=2.0
 PyOpenGL
 glfw
+
+
+# xformers==0.0.35

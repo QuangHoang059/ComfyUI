@@ -115,27 +115,10 @@ def import_custom_nodes() -> None:
 
 from nodes import NODE_CLASS_MAPPINGS
 
-def _free_ram():
-	"""Unload all ComfyUI-managed models and run GC to reclaim system RAM."""
-	import gc
-	import comfy.model_management as mm
-	mm.unload_all_models()
-	mm.soft_empty_cache()
-	gc.collect()
-
-
 def main():
 	import_custom_nodes()
 
-	# # Apply --lowvram mode: offload model weights layer-by-layer to save VRAM
-	# import comfy.model_management as mm
-	# mm.vram_state = mm.VRAMState.LOW_VRAM
-	# mm.set_vram_to = mm.VRAMState.LOW_VRAM
-	# mm.lowvram_available = True
-
 	with torch.inference_mode():
-
-		# ── Stage 1: Preprocessing (no large models) ──────────────────────────
 		loadimage = NODE_CLASS_MAPPINGS["LoadImage"]()
 		loadimage_76 = loadimage.load_image(image="tag_hot.png")
 
@@ -150,6 +133,9 @@ def main():
 
 		autotranslatechinatovn = NODE_CLASS_MAPPINGS["AutoTranslateChinaToVN"]()
 		autotranslatechinatovn_244 = autotranslatechinatovn.encode(texts_bboxes=get_value_at_index(filterchinesetext_242, 0), texts_string=get_value_at_index(filterchinesetext_242, 1))
+
+		unetloader = NODE_CLASS_MAPPINGS["UNETLoader"]()
+		unetloader_92_106 = unetloader.load_unet(unet_name="flux-2-klein-9b-fp8.safetensors", weight_dtype="default")
 
 		createimagebytextnode = NODE_CLASS_MAPPINGS["CreateImageByTextNode"]()
 		createimagebytextnode_243 = createimagebytextnode.run(image=get_value_at_index(loadimage_76, 0), bboxes=get_value_at_index(autotranslatechinatovn_244, 0), texts_string=get_value_at_index(autotranslatechinatovn_244, 1))
@@ -181,11 +167,12 @@ def main():
 		imagescaletototalpixels = NODE_CLASS_MAPPINGS["ImageScaleToTotalPixels"]()
 		imagescaletototalpixels_92_85 = imagescaletototalpixels.EXECUTE_NORMALIZED(upscale_method="nearest-exact", megapixels=1, resolution_steps=1, image=get_value_at_index(comfyswitchnode_178, 0))
 
-		comfyswitchnode_181 = comfyswitchnode.EXECUTE_NORMALIZED(switch=get_value_at_index(primitiveboolean_182, 0), on_false=get_value_at_index(loadimage_76, 0), on_true=get_value_at_index(imageresizekjv2_177_12, 0))
+		vaeloader = NODE_CLASS_MAPPINGS["VAELoader"]()
+		vaeloader_92_107 = vaeloader.load_vae(vae_name="flux2-vae.safetensors")
 
-		imagescaletototalpixels_92_110 = imagescaletototalpixels.EXECUTE_NORMALIZED(upscale_method="nearest-exact", megapixels=1, resolution_steps=1, image=get_value_at_index(comfyswitchnode_181, 0))
+		vaeencode = NODE_CLASS_MAPPINGS["VAEEncode"]()
+		vaeencode_92_84_120 = vaeencode.encode(pixels=get_value_at_index(imagescaletototalpixels_92_85, 0), vae=get_value_at_index(vaeloader_92_107, 0))
 
-		# ── Stage 2: CLIP encode → free CLIP (~8 GB) ──────────────────────────
 		cliploader = NODE_CLASS_MAPPINGS["CLIPLoader"]()
 		cliploader_92_111 = cliploader.load_clip(clip_name="qwen_3_8b_fp8mixed.safetensors", type="flux2", device="default")
 
@@ -209,24 +196,11 @@ def main():
 
 		cliptextencode_92_87 = cliptextencode.encode(text="", clip=get_value_at_index(cliploader_92_111, 0))
 
-		del cliploader_92_111
-		_free_ram()
+		comfyswitchnode_181 = comfyswitchnode.EXECUTE_NORMALIZED(switch=get_value_at_index(primitiveboolean_182, 0), on_false=get_value_at_index(loadimage_76, 0), on_true=get_value_at_index(imageresizekjv2_177_12, 0))
 
-		# ── Stage 3: VAE encode × 2 → free VAE ───────────────────────────────
-		vaeloader = NODE_CLASS_MAPPINGS["VAELoader"]()
-		vaeloader_92_107 = vaeloader.load_vae(vae_name="flux2-vae.safetensors")
-
-		vaeencode = NODE_CLASS_MAPPINGS["VAEEncode"]()
-		vaeencode_92_84_120 = vaeencode.encode(pixels=get_value_at_index(imagescaletototalpixels_92_85, 0), vae=get_value_at_index(vaeloader_92_107, 0))
+		imagescaletototalpixels_92_110 = imagescaletototalpixels.EXECUTE_NORMALIZED(upscale_method="nearest-exact", megapixels=1, resolution_steps=1, image=get_value_at_index(comfyswitchnode_181, 0))
 
 		vaeencode_92_112_117 = vaeencode.encode(pixels=get_value_at_index(imagescaletototalpixels_92_110, 0), vae=get_value_at_index(vaeloader_92_107, 0))
-
-		del vaeloader_92_107
-		_free_ram()
-
-		# ── Stage 4: UNet sampling ────────────────────────────────────────────
-		unetloader = NODE_CLASS_MAPPINGS["UNETLoader"]()
-		unetloader_92_106 = unetloader.load_unet(unet_name="flux-2-klein-9b-fp8.safetensors", weight_dtype="default")
 
 		randomnoise = NODE_CLASS_MAPPINGS["RandomNoise"]()
 		randomnoise_92_105 = randomnoise.EXECUTE_NORMALIZED(noise_seed=random.randint(1, 2**64))
@@ -237,13 +211,15 @@ def main():
 		joinimagewithalpha = NODE_CLASS_MAPPINGS["JoinImageWithAlpha"]()
 		referencelatent = NODE_CLASS_MAPPINGS["ReferenceLatent"]()
 		cfgguider = NODE_CLASS_MAPPINGS["CFGGuider"]()
+		getimagesize = NODE_CLASS_MAPPINGS["GetImageSize+"]()
 		flux2scheduler = NODE_CLASS_MAPPINGS["Flux2Scheduler"]()
 		emptyflux2latentimage = NODE_CLASS_MAPPINGS["EmptyFlux2LatentImage"]()
 		samplercustomadvanced = NODE_CLASS_MAPPINGS["SamplerCustomAdvanced"]()
+		vaedecode = NODE_CLASS_MAPPINGS["VAEDecode"]()
 		colormatch = NODE_CLASS_MAPPINGS["ColorMatch"]()
 		saveimage = NODE_CLASS_MAPPINGS["SaveImage"]()
-		saveimage.output_dir = "./content/output"
-
+        saveimage.output_dir = "./content/output"
+        
 		for q in range(1):
 			joinimagewithalpha_141 = joinimagewithalpha.EXECUTE_NORMALIZED(image=get_value_at_index(loadimage_76, 0), alpha=get_value_at_index(loadimage_76, 1))
 
@@ -265,19 +241,7 @@ def main():
 
 			samplercustomadvanced_92_103 = samplercustomadvanced.EXECUTE_NORMALIZED(noise=get_value_at_index(randomnoise_92_105, 0), guider=get_value_at_index(cfgguider_92_114, 0), sampler=get_value_at_index(ksamplerselect_92_102, 0), sigmas=get_value_at_index(flux2scheduler_92_115, 0), latent_image=get_value_at_index(emptyflux2latentimage_92_109, 0))
 
-			# Free UNet before VAE decode (~9 GB)
-			del unetloader_92_106, cfgguider_92_114
-			_free_ram()
-
-			# ── Stage 5: VAE decode ───────────────────────────────────────────
-			vaeloader_decode = NODE_CLASS_MAPPINGS["VAELoader"]()
-			vaeloader_decode_result = vaeloader_decode.load_vae(vae_name="flux2-vae.safetensors")
-
-			vaedecode = NODE_CLASS_MAPPINGS["VAEDecode"]()
-			vaedecode_92_104 = vaedecode.decode(samples=get_value_at_index(samplercustomadvanced_92_103, 0), vae=get_value_at_index(vaeloader_decode_result, 0))
-
-			del vaeloader_decode_result
-			_free_ram()
+			vaedecode_92_104 = vaedecode.decode(samples=get_value_at_index(samplercustomadvanced_92_103, 0), vae=get_value_at_index(vaeloader_92_107, 0))
 
 			imageresizekjv2_129 = imageresizekjv2.resize(width=get_value_at_index(getimagesize_177_11, 0), height=get_value_at_index(getimagesize_177_11, 1), upscale_method="nearest-exact", keep_proportion="stretch", pad_color="0, 0, 0", crop_position="center", divisible_by=2, device="cpu", image=get_value_at_index(vaedecode_92_104, 0), unique_id=1642360321667796631)
 
