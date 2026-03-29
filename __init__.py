@@ -1,5 +1,8 @@
 import sys
 import os
+import importlib
+import importlib.abc
+import importlib.machinery
 import importlib.util as _ilu
 
 _here = os.path.dirname(os.path.abspath(__file__))
@@ -22,6 +25,50 @@ try:
 except ValueError:
     pass
 sys.path.insert(0, _here)
+
+
+class _ComfyUIFlatImporter(importlib.abc.MetaPathFinder, importlib.abc.Loader):
+    """
+    Đảm bảo `import ComfyUI.X` và `import X` luôn trả về CÙNG một module object
+    trong sys.modules, chia sẻ toàn bộ global state (ví dụ: folder_paths,
+    server.PromptServer.instance, nodes.NODE_CLASS_MAPPINGS, ...).
+
+    Nguyên nhân gốc: khi _here được thêm vào sys.path, Python tạo ra 2 entry riêng
+    biệt — sys.modules['folder_paths'] và sys.modules['ComfyUI.folder_paths'] — mỗi
+    entry có namespace riêng, khiến việc cập nhật global ở một phía không ảnh hưởng
+    phía kia.
+    """
+    _PREFIX = 'ComfyUI.'
+
+    def find_spec(self, fullname, path, target=None):
+        if not fullname.startswith(self._PREFIX):
+            return None
+        flat_name = fullname[len(self._PREFIX):]
+        # Module đã được nạp dưới tên flat → alias ngay
+        if flat_name in sys.modules:
+            return importlib.machinery.ModuleSpec(fullname, self)
+        # Module chưa nạp nhưng file tồn tại trong _here → để create_module nạp flat trước
+        parts = flat_name.split('.')
+        if (os.path.isfile(os.path.join(_here, *parts) + '.py') or
+                os.path.isfile(os.path.join(_here, *parts, '__init__.py'))):
+            return importlib.machinery.ModuleSpec(fullname, self)
+        return None
+
+    def create_module(self, spec):
+        flat_name = spec.name[len(self._PREFIX):]
+        if flat_name not in sys.modules:
+            # Nạp dưới tên flat, _here đã ở sys.path[0] nên sẽ tìm đúng file
+            importlib.import_module(flat_name)
+        return sys.modules[flat_name]
+
+    def exec_module(self, module):
+        # Module đã được exec khi nạp dưới tên flat; không làm gì thêm.
+        pass
+
+
+# Cài importer ở vị trí 0 để ưu tiên cao nhất, trước PathFinder của Python
+sys.meta_path.insert(0, _ComfyUIFlatImporter())
+
 
 # Nạp trực tiếp 'utils' package từ đường dẫn tuyệt đối, hoàn toàn bỏ qua
 # mọi sys.path conflict. Điều này đảm bảo `from utils.install_util import ...`

@@ -69,12 +69,12 @@ def add_extra_model_paths() -> None:
     Parse the optional extra_model_paths.yaml file and add the parsed paths to the sys.path.
     """
     try:
-        from main import load_extra_path_config
+        from ComfyUI.main import load_extra_path_config
     except ImportError:
         print(
             "Could not import load_extra_path_config from main.py. Looking in utils.extra_config instead."
         )
-        from utils.extra_config import load_extra_path_config
+        from ComfyUI.utils.extra_config import load_extra_path_config
 
     extra_model_paths = find_path("extra_model_paths.yaml")
 
@@ -136,11 +136,8 @@ def main():
 		unetloader = NODE_CLASS_MAPPINGS["UNETLoader"]()
 		unetloader_92_106 = unetloader.load_unet(unet_name="flux-2-klein-9b-fp8.safetensors", weight_dtype="default")
 
-		sdvn_run_python_code = NODE_CLASS_MAPPINGS["SDVN Run Python Code"]()
-		sdvn_run_python_code_253 = sdvn_run_python_code.python_function(function="def function(input_value, extra_value=None):\n    import json\n\n    result=json.loads(f''{input_value}'')\n    return [[result]]", input=get_value_at_index(autotranslatechinatovn_244, 1))
-
 		createimagebytextnode = NODE_CLASS_MAPPINGS["CreateImageByTextNode"]()
-		createimagebytextnode_243 = createimagebytextnode.run(image=get_value_at_index(loadimage_76, 0), bboxes=get_value_at_index(autotranslatechinatovn_244, 0), texts_string=get_value_at_index(sdvn_run_python_code_253, 0))
+		createimagebytextnode_243 = createimagebytextnode.run(image=get_value_at_index(loadimage_76, 0), bboxes=get_value_at_index(autotranslatechinatovn_244, 0), texts_string=get_value_at_index(autotranslatechinatovn_244, 1))
 
 		getimagesize = NODE_CLASS_MAPPINGS["GetImageSize+"]()
 		getimagesize_177_11 = getimagesize.execute(image=get_value_at_index(loadimage_76, 0))

@@ -54,6 +54,40 @@ def find_path(name: str, path: str = None) -> str:
     # Recursively call the function with the parent directory
     return find_path(name, parent_directory)
 
+def add_comfyui_directory_to_sys_path() -> None:
+    """
+    Add 'ComfyUI' to the sys.path
+    """
+    comfyui_path = find_path("ComfyUI")
+    if comfyui_path is not None and os.path.isdir(comfyui_path):
+        sys.path.append(comfyui_path)
+        print(f"'{comfyui_path}' added to sys.path")
+
+
+def add_extra_model_paths() -> None:
+    """
+    Parse the optional extra_model_paths.yaml file and add the parsed paths to the sys.path.
+    """
+    try:
+        from ComfyUI.main import load_extra_path_config
+    except ImportError:
+        print(
+            "Could not import load_extra_path_config from main.py. Looking in utils.extra_config instead."
+        )
+        from ComfyUI.utils.extra_config import load_extra_path_config
+
+    extra_model_paths = find_path("extra_model_paths.yaml")
+
+    if extra_model_paths is not None:
+        load_extra_path_config(extra_model_paths)
+    else:
+        print("Could not find the extra_model_paths config file.")
+
+
+
+add_comfyui_directory_to_sys_path()
+add_extra_model_paths()
+
 
 def import_custom_nodes() -> None:
     """Find all custom nodes in the custom_nodes folder and add those node objects to NODE_CLASS_MAPPINGS
@@ -125,6 +159,7 @@ def main(image_original="icon_nd@.png", image_generated="ComfyUI_temp_ttkbc_0000
         invertmask = NODE_CLASS_MAPPINGS["InvertMask"]()
         joinimagewithalpha = NODE_CLASS_MAPPINGS["JoinImageWithAlpha"]()
         saveimage = NODE_CLASS_MAPPINGS["SaveImage"]()
+        saveimage.output_dir = "./content/output"
 
         for q in range(1):
             mark_target = get_value_at_index(loadimage_82, 1)

@@ -225,8 +225,8 @@
         0
       ],
       "texts_string": [
-        "253",
-        0
+        "244",
+        1
       ]
     },
     "class_type": "CreateImageByTextNode",
@@ -248,19 +248,6 @@
     "class_type": "AutoTranslateChinaToVN",
     "_meta": {
       "title": "Auto Translate China To VN"
-    }
-  },
-  "253": {
-    "inputs": {
-      "function": "def function(input_value, extra_value=None):\n    import json\n\n    result=json.loads(f'\"{input_value}\"')\n    return [[result]]",
-      "input": [
-        "244",
-        1
-      ]
-    },
-    "class_type": "SDVN Run Python Code",
-    "_meta": {
-      "title": "👨🏻‍💻 Run Python Code"
     }
   },
   "177:18": {
