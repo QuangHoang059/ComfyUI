@@ -2,6 +2,7 @@ import os
 import random
 import sys
 from typing import Sequence, Mapping, Any, Union
+from types import SimpleNamespace
 import torch
 
 
@@ -116,60 +117,69 @@ def import_custom_nodes() -> None:
 
 from nodes import NODE_CLASS_MAPPINGS
 
-import_custom_nodes()
+_nodes = None
 
-def main(image_original="icon_nd@.png", image_generated="ComfyUI_temp_ttkbc_00001_.png"):
-   
+
+def init_nodes(output_dir: str = "./content/output", device: str = "cuda"):
+    global _nodes
+    print("Init model")
+    import_custom_nodes()
+
+    n = SimpleNamespace()
+    n.loadimage = NODE_CLASS_MAPPINGS["LoadImage"]()
+    n.paddleocrnode = NODE_CLASS_MAPPINGS["PaddleOCRNode"]()
+    n.filterchinesetext = NODE_CLASS_MAPPINGS["FilterChineseText"]()
+    n.detectbboxnode = NODE_CLASS_MAPPINGS["DetectBBoxNode"]()
+    n.bboxtoint = NODE_CLASS_MAPPINGS["BboxToInt"]()
+    n.image_crop_location_exact = NODE_CLASS_MAPPINGS["Image Crop Location Exact"]()
+    n.imagecompositemasked = NODE_CLASS_MAPPINGS["ImageCompositeMasked"]()
+    n.solidmask = NODE_CLASS_MAPPINGS["SolidMask"]()
+    n.maskcomposite = NODE_CLASS_MAPPINGS["MaskComposite"]()
+    n.rmbg = NODE_CLASS_MAPPINGS["RMBG"]()
+    n.invertmask = NODE_CLASS_MAPPINGS["InvertMask"]()
+    n.joinimagewithalpha = NODE_CLASS_MAPPINGS["JoinImageWithAlpha"]()
+    n.saveimage = NODE_CLASS_MAPPINGS["SaveImage"]()
+    n.saveimage.output_dir = output_dir
+    _nodes = n
+    return _nodes
+
+
+def inference(image_original="icon_nd@.png", image_generated="ComfyUI_temp_ttkbc_00001_.png"):
+    n = _nodes
+    prefix_ref_alpha_new = os.path.basename(os.path.splitext(image_original)[0])+"_ref_alpha_new.png"
+    prefix_ref_alpha_old = os.path.basename(os.path.splitext(image_original)[0])+"_ref_alpha_old.png"
     with torch.inference_mode():
-        loadimage = NODE_CLASS_MAPPINGS["LoadImage"]()
-        
-        loadimage_82 = loadimage.load_image(image=image_original)
-        loadimage_5 = loadimage.load_image(image=image_generated)
-        
-        paddleocrnode = NODE_CLASS_MAPPINGS["PaddleOCRNode"]()
+        loadimage_82 = n.loadimage.load_image(image=image_original)
+        loadimage_5 = n.loadimage.load_image(image=image_generated)
 
-        paddleocrnode_230 = paddleocrnode.run(
+        paddleocrnode_230 = n.paddleocrnode.run(
             lang="ch", device="gpu", image=get_value_at_index(loadimage_82, 0)
         )
 
-        paddleocrnode_243 = paddleocrnode.run(
-                lang="ch", device="gpu", image=get_value_at_index(loadimage_5, 0)
-            )
-        filterchinesetext = NODE_CLASS_MAPPINGS["FilterChineseText"]()
-        
-        filterchinesetext_244 = filterchinesetext.encode(
+        paddleocrnode_243 = n.paddleocrnode.run(
+            lang="ch", device="gpu", image=get_value_at_index(loadimage_5, 0)
+        )
+
+        filterchinesetext_244 = n.filterchinesetext.encode(
             texts_bboxes=get_value_at_index(paddleocrnode_230, 2),
             texts_string=get_value_at_index(paddleocrnode_230, 1),
         )
 
-        detectbboxnode = NODE_CLASS_MAPPINGS["DetectBBoxNode"]()
-        
-        detectbboxnode_245 = detectbboxnode.run(
-                bboxes_target=get_value_at_index(filterchinesetext_244, 0),
-                bboxes=get_value_at_index(paddleocrnode_243, 2),
-                texts_string=get_value_at_index(paddleocrnode_243, 1),
-            )
-        
-        bboxtoint = NODE_CLASS_MAPPINGS["BboxToInt"]()
-        image_crop_location_exact = NODE_CLASS_MAPPINGS["Image Crop Location Exact"]()
-        imagecompositemasked = NODE_CLASS_MAPPINGS["ImageCompositeMasked"]()
-        solidmask = NODE_CLASS_MAPPINGS["SolidMask"]()
-        maskcomposite = NODE_CLASS_MAPPINGS["MaskComposite"]()
-        rmbg = NODE_CLASS_MAPPINGS["RMBG"]()
-        invertmask = NODE_CLASS_MAPPINGS["InvertMask"]()
-        joinimagewithalpha = NODE_CLASS_MAPPINGS["JoinImageWithAlpha"]()
-        saveimage = NODE_CLASS_MAPPINGS["SaveImage"]()
-        saveimage.output_dir = "./content/output"
+        detectbboxnode_245 = n.detectbboxnode.run(
+            bboxes_target=get_value_at_index(filterchinesetext_244, 0),
+            bboxes=get_value_at_index(paddleocrnode_243, 2),
+            texts_string=get_value_at_index(paddleocrnode_243, 1),
+        )
 
         for q in range(1):
             mark_target = get_value_at_index(loadimage_82, 1)
             for i in range(len(get_value_at_index(filterchinesetext_244, 0))):
 
-                bboxtoint_247 = bboxtoint.bboxtoint(
+                bboxtoint_247 = n.bboxtoint.bboxtoint(
                     index=i, bboxes=get_value_at_index(detectbboxnode_245, 0)
                 )
 
-                image_crop_location_exact_265_254 = image_crop_location_exact.main(
+                image_crop_location_exact_265_254 = n.image_crop_location_exact.main(
                     x=get_value_at_index(bboxtoint_247, 0),
                     y=get_value_at_index(bboxtoint_247, 1),
                     width=get_value_at_index(bboxtoint_247, 2),
@@ -178,7 +188,7 @@ def main(image_original="icon_nd@.png", image_generated="ComfyUI_temp_ttkbc_0000
                     image=get_value_at_index(loadimage_5, 0),
                 )
 
-                imagecompositemasked_265_185 = imagecompositemasked.EXECUTE_NORMALIZED(
+                imagecompositemasked_265_185 = n.imagecompositemasked.EXECUTE_NORMALIZED(
                     x=get_value_at_index(bboxtoint_247, 0),
                     y=get_value_at_index(bboxtoint_247, 1),
                     resize_source=False,
@@ -186,17 +196,17 @@ def main(image_original="icon_nd@.png", image_generated="ComfyUI_temp_ttkbc_0000
                     source=get_value_at_index(image_crop_location_exact_265_254, 0),
                 )
 
-                bboxtoint_257 = bboxtoint.bboxtoint(
+                bboxtoint_257 = n.bboxtoint.bboxtoint(
                     index=i, bboxes=get_value_at_index(filterchinesetext_244, 0)
                 )
 
-                solidmask_265_222 = solidmask.EXECUTE_NORMALIZED(
+                solidmask_265_222 = n.solidmask.EXECUTE_NORMALIZED(
                     value=1,
                     width=get_value_at_index(bboxtoint_257, 2),
                     height=get_value_at_index(bboxtoint_257, 3),
                 )
 
-                maskcomposite_265_223 = maskcomposite.EXECUTE_NORMALIZED(
+                maskcomposite_265_223 = n.maskcomposite.EXECUTE_NORMALIZED(
                     x=get_value_at_index(bboxtoint_257, 0),
                     y=get_value_at_index(bboxtoint_257, 1),
                     operation="or",
@@ -204,7 +214,7 @@ def main(image_original="icon_nd@.png", image_generated="ComfyUI_temp_ttkbc_0000
                     source=get_value_at_index(solidmask_265_222, 0),
                 )
 
-                rmbg_265_219 = rmbg.process_image(
+                rmbg_265_219 = n.rmbg.process_image(
                     model="RMBG-2.0",
                     sensitivity=1,
                     process_res=1024,
@@ -217,11 +227,11 @@ def main(image_original="icon_nd@.png", image_generated="ComfyUI_temp_ttkbc_0000
                     image=get_value_at_index(image_crop_location_exact_265_254, 0),
                 )
 
-                invertmask_265_220 = invertmask.EXECUTE_NORMALIZED(
+                invertmask_265_220 = n.invertmask.EXECUTE_NORMALIZED(
                     mask=get_value_at_index(rmbg_265_219, 1)
                 )
 
-                mark_target = maskcomposite.EXECUTE_NORMALIZED(
+                mark_target = n.maskcomposite.EXECUTE_NORMALIZED(
                     x=get_value_at_index(bboxtoint_247, 0),
                     y=get_value_at_index(bboxtoint_247, 1),
                     operation="and",
@@ -229,35 +239,30 @@ def main(image_original="icon_nd@.png", image_generated="ComfyUI_temp_ttkbc_0000
                     source=get_value_at_index(invertmask_265_220, 0),
                 )
 
-            joinimagewithalpha_209 = joinimagewithalpha.EXECUTE_NORMALIZED(
+            joinimagewithalpha_209 = n.joinimagewithalpha.EXECUTE_NORMALIZED(
                 image=get_value_at_index(imagecompositemasked_265_185, 0),
                 alpha=get_value_at_index(mark_target, 0),
             )
 
-            saveimage_221 = saveimage.save_images(
-                filename_prefix="ComfyUI",
+            saveimage_221 = n.saveimage.save_images(
+                filename_prefix=prefix_ref_alpha_new,
                 images=get_value_at_index(joinimagewithalpha_209, 0),
             )
 
-            joinimagewithalpha_224 = joinimagewithalpha.EXECUTE_NORMALIZED(
+            joinimagewithalpha_224 = n.joinimagewithalpha.EXECUTE_NORMALIZED(
                 image=get_value_at_index(loadimage_82, 0),
                 alpha=get_value_at_index(maskcomposite_265_223, 0),
             )
 
-            saveimage_229 = saveimage.save_images(
-                filename_prefix="ComfyUI",
+            saveimage_229 = n.saveimage.save_images(
+                filename_prefix=prefix_ref_alpha_old,
                 images=get_value_at_index(joinimagewithalpha_224, 0),
             )
 
-            # joinimagewithalpha_263 = joinimagewithalpha.EXECUTE_NORMALIZED(
-            #     image=get_value_at_index(imagecompositemasked_265_185, 0),
-            #     alpha=get_value_at_index(loadimage_82, 1),
-            # )
 
-            # saveimage_264 = saveimage.save_images(
-            #     filename_prefix="ComfyUI",
-            #     images=get_value_at_index(joinimagewithalpha_263, 0),
-            # )
+def main():
+    init_nodes()
+    inference("icon_nd@.png", "ComfyUI_temp_ttkbc_00001_.png")
 
 
 if __name__ == "__main__":

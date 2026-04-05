@@ -227,7 +227,8 @@
       "texts_string": [
         "244",
         1
-      ]
+      ],
+      "font_path": "arial.ttf"
     },
     "class_type": "CreateImageByTextNode",
     "_meta": {
