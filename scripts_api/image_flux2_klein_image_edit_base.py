@@ -196,11 +196,11 @@ def inference(origin_image_path, is_resize_needed: bool = False):
 
         paddleocrnode_241 = n.paddleocrnode.run(lang="ch", device="gpu", image=get_value_at_index(loadimage_76, 0))
 
-        filterchinesetext_242 = n.filterchinesetext.encode(texts_bboxes=get_value_at_index(paddleocrnode_241, 0), texts_string=get_value_at_index(paddleocrnode_241, 1))
+        filterchinesetext_242 = n.filterchinesetext.encode(texts_bboxes=get_value_at_index(paddleocrnode_241, 0), texts_string=get_value_at_index(paddleocrnode_241, 1), polys=get_value_at_index(paddleocrnode_241, 3))
 
-        autotranslatechinatovn_244 = n.autotranslatechinatovn.encode(texts_bboxes=get_value_at_index(filterchinesetext_242, 0), texts_string=get_value_at_index(filterchinesetext_242, 1))
+        autotranslatechinatovn_244 = n.autotranslatechinatovn.encode(texts_bboxes=get_value_at_index(filterchinesetext_242, 0), texts_string=get_value_at_index(filterchinesetext_242, 1), polys=get_value_at_index(filterchinesetext_242, 2))
 
-        createimagebytextnode_243 = n.createimagebytextnode.run(image=get_value_at_index(loadimage_76, 0), bboxes=get_value_at_index(autotranslatechinatovn_244, 0), texts_string=get_value_at_index(autotranslatechinatovn_244, 1), font_path="arial.ttf")
+        createimagebytextnode_243 = n.createimagebytextnode.run(image=get_value_at_index(loadimage_76, 0), bboxes=get_value_at_index(autotranslatechinatovn_244, 0), texts_string=get_value_at_index(autotranslatechinatovn_244, 1), font_path="arial.ttf", polys=get_value_at_index(autotranslatechinatovn_244, 2))
 
         getimagesize_177_11 = n.getimagesize.execute(image=get_value_at_index(loadimage_76, 0))
 

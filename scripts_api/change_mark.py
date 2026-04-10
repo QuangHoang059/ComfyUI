@@ -161,13 +161,14 @@ def inference(image_original="icon_nd@.png", image_generated="ComfyUI_temp_ttkbc
         )
 
         filterchinesetext_244 = n.filterchinesetext.encode(
-            texts_bboxes=get_value_at_index(paddleocrnode_230, 2),
+            texts_bboxes=get_value_at_index(paddleocrnode_230, 0),
             texts_string=get_value_at_index(paddleocrnode_230, 1),
+            polys=get_value_at_index(paddleocrnode_230, 3),
         )
 
         detectbboxnode_245 = n.detectbboxnode.run(
             bboxes_target=get_value_at_index(filterchinesetext_244, 0),
-            bboxes=get_value_at_index(paddleocrnode_243, 2),
+            bboxes=get_value_at_index(paddleocrnode_243, 0),
             texts_string=get_value_at_index(paddleocrnode_243, 1),
         )
 
